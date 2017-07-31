@@ -1,49 +1,45 @@
-var methods = require('./commands.js')
+const chalk = require('chalk');
+const commands = require('./commands')
 
-var done = function(cmdList, output){
-    if (!output) {return x => done(cmdList, x)}
-    if (cmdList.length == 1){
-        process.stdout.write(output);
-        process.stdout.write('\nprompt > ');
+const prompt = chalk.blue('\n prompt > ');
+var cmdGroups = [];
+
+process.stdout.write(prompt);
+process.stdin.on('data', function (data) {
+    cmdGroups = data.toString().trim().split(/\s*\|\s*/g);
+    const unsafeCommands = getUnsafe(cmdGroups);
+    if (unsafeCommands.length) {
+        process.stderr.write(chalk.red('command(s) not found: ') + unsafeCommands.join(' '));
+        cmdGroups = [];
+        done('');
     } else {
-        return output;
+        execute(cmdGroups.shift());
     }
 
-};
-//comment 1
-//comment 1
-//comment 1
-// Output a prompt
-process.stdout.write('prompt > ');
+})
+//potato
 
-// The stdin 'data' event fires after a user types in a line
-process.stdin.on('data', function (data) {
-//   var cmd = data.toString().trim().split(' ');
-  var cmdString = data.toString().trim();
-  var cmdList = cmdString.split(/\s*\|\s*/g) // any amount of whitespace, pipe, any amount of whitespace // remove the newline
-  var stdin;
-  while (cmdList.length > 0){
-    cmd = cmdList.shift();
-    console.log(cmd)
-    var fnc = methods[cmd.split(' ')[0]]
-    if (fnc) {
-        stdin = fnc(stdin, cmd.split(' '), done(cmdList))
+function getUnsafe(cmdStrings) {
+    return cmdStrings
+    .map(cmdString => cmdString.split(' ')[0])
+    .filter(cmd => !commands[cmd]);
+}
+
+function execute(cmdString, lastOutput) {
+    const tokens = cmdString.toString().trim().split(' ');
+    const cmd = tokens[0];
+    const args = tokens.slice(1).join(' ');
+
+    if (commands[cmd]) commands[cmd](lastOutput, args, done)
+    // else {
+    //     process.stderr.write(chalk.red('commend not found: ') + cmd);
+    //     process.stdout.write(prompt);
+    // }
+}
+function done(output) {
+    if (cmdGroups.length) {
+        execute(cmdGroups.shift(), output)
     } else {
-        done(cmdList, 'You typed: ' + cmd);
-    } 
-  }
-//   cmdList.forEach(function(cmd){
-//   var fnc = methods[cmd.split(' ')[0]]
-//   if (fnc) {
-//     stdin = fnc(stdin, cmd.split(' '), done)
-//   } else {
-//     done('You typed: ' + cmd.join(' '));
-// //   }
-//   });
-//   var fnc = methods[cmd[0]]
-//   if (fnc) {
-//     fnc(cmd, done)
-//   } else {
-//     done('You typed: ' + cmd.join(' '));
-//   }
-});
+        process.stdout.write(output + prompt);
+    }
+}

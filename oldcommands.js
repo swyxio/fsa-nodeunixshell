@@ -60,7 +60,7 @@ module.exports = {
             })
         })
     },
-    head: function(stdin, args, done) {
+    head: function(stdin, args, done, cmdList) {
         let str = [];
         var counter = 0;
         if (args.length == 1 && stdin){
@@ -68,20 +68,14 @@ module.exports = {
         }
         args.slice(1).forEach((arg, i) => {
             var cbfunc = function(data) {
-                // if (counter < 1){
-                // console.log('******')
                 str.push(data.toString().split('\n').slice(0, 5).join('\n'));
-                // conheadd
-                // console.log(data.toString())
-                // console.log('******')
-                 str = str.join('\n')
-                    // process.stdout.write(str.split('\n').slice(5).join('\n'))
-                    done(str);
-                    // process.stdout.write(str)
-                    // process.stdout.write('\nprompt > ')
+                str = str.join('\n')
+                done(cmdList, str);
+                // if (cmdList.length <= 1) {
+                //     done(cmdList, str);
+                // } else {
+                //     return str
                 // }
-            //     counter++;
-            //  }   
             };
             fs.readFile(arg, function read(err,data, str) {
                 if (err) {console.log('Invalid file');
@@ -129,15 +123,17 @@ module.exports = {
             })
         })
     },
-    wc: function(stdin, args, done) {
+    wc: function(stdin, args, done, cmdList) {
         let str = [];
         if (args.length == 1 && stdin){
             args.push(stdin);
         }
+        console.log('wc args', args)
+        console.log('wc stdin', stdin)
         args.slice(1).forEach((arg, i) => {
             var cbfunc = function(data) {
                 str.push(data.toString().split('\n').length);
-                done(str.toString());
+                done(cmdList, str.toString());
                 // process.stdout.write(str.toString());
                 // process.stdout.write('\nprompt > ');
             };
